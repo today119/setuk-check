@@ -226,9 +226,10 @@ th{color:var(--ink3);font-weight:650;font-size:.82rem}
       <tr><td><span class="tag block">금지</span></td><td>공인어학시험 · 대회 참여와 수상 · 모의고사 성적 · 논문/출간/지식재산권 · 소논문 · MOOC · 방과후학교 · 해외활동 · 자격증 · 인증시험 · 장학금 · 부모 지위 · 학교명</td><td>유의사항 3항, 제13조</td></tr>
       <tr><td><span class="tag check">확인</span></td><td>순위·등수 표현 · 대학/학원/상호명 · 특정 앱·상표명 · 학생 실명 · 1인칭 · 구체적 점수</td><td>문맥 판단 필요</td></tr>
       <tr><td><span class="tag style">형식</span></td><td>1,500Byte(500자) 초과 · 문장 종결 · 영문 사용 · 특수문자·이모지</td><td>제4조③</td></tr>
-      <tr><td><span class="tag typo">오탈자</span></td><td>조사 오류 · 어절 중복 · 이중 공백 · 맞춤법 · 띄어쓰기</td><td>—</td></tr>
+      <tr><td><span class="tag typo">오탈자</span></td><td>맞춤법 150여 항목 · <b>의존명사 띄어쓰기</b>(수·것·때·뿐·만큼) · 붙어버린 긴 어절 · 조사 오류와 겹침 · 어절 중복 · <b>두 칸 공백</b>·문장부호 · 자모·깨진 글자 · 괄호 짝 · 마침표 누락</td><td>—</td></tr>
     </table></div>
     <p style="margin-top:14px"><b>글자 수 기준</b> — NEIS는 한글·한자 1자를 <b>3Byte</b>, 영문·숫자·공백을 1Byte로 셉니다. 과목별 세부능력 및 특기사항은 <b>500자(1,500Byte)</b>가 한도입니다.</p>
+    <p><b>오탈자 검사의 한계</b> — 완전한 맞춤법 검사는 형태소 분석이 필요하고, 외부 검사기 API를 쓰면 학생 문장을 다른 서버로 보내야 해서 넣지 않았습니다. 대신 <b>자주 틀리는 것을 확실히 잡는</b> 쪽으로 만들었습니다. 「맞추다/맞히다」, 「로써/로서」, 「율/률」처럼 문맥에 따라 둘 다 맞는 것은 일부러 검사하지 않습니다.</p>
     <p><b>「확인」 표시는 무조건 잘못이라는 뜻이 아닙니다.</b> 예를 들어 수업 중 리그전의 「우승」은 대회 성적이 아니므로 그대로 두셔도 됩니다. 기계가 판단할 수 없는 부분이라 사람이 보시라고 표시합니다.</p>
   </div>
 </details>
@@ -254,6 +255,7 @@ th{color:var(--ink3);font-weight:650;font-size:.82rem}
 
 </div>
 
+<script src="wordlists.js"></script>
 <script src="rules.js"></script>
 <script>
 /* ══════════════════════════════════════════
@@ -370,31 +372,107 @@ function checkDup(t){
 function checkSpell(t){
   const out=[];
   for(const [bad,good,note] of SPELL){
-    if(!bad || bad.startsWith('~') || bad.length<2) continue;
+    if(!bad || bad.length<2) continue;
     let i=-1;
     while((i=t.indexOf(bad,i+1))>=0)
       out.push({i, len:bad.length, hit:bad, msg: good? `「${bad}」 → 「${good}」${note?' · '+note:''}` : note});
+  }
+  // 「~이였」은 앞말에 받침이 있을 때만 틀림 (차이였다·의미였다는 바른 표기)
+  for(const m of t.matchAll(/([가-힣])이(였|였다|였고|였음)/g)){
+    if(hasBatchim(m[1])) out.push({i:m.index, len:m[0].length, hit:m[0],
+      msg:`「${m[0]}」 → 「${m[1]}이었${m[2].slice(1)}」`});
   }
   return out;
 }
 function checkSpacing(t){
   const out=[];
-  for(const [re,fix] of SPACING){
+  for(const [re,fix] of SPACING)
     for(const m of t.matchAll(re)) out.push({i:m.index, len:m[0].length, hit:m[0], msg:`「${m[0]}」 → 「${fix}」`});
+  for(const [re,fix] of SPACING_JOIN)
+    for(const m of t.matchAll(re)) out.push({i:m.index, len:m[0].length, hit:m[0], msg:`「${m[0]}」 → 「${fix}」 (붙여 씁니다)`});
+  return out;
+}
+/* 의존명사 앞 띄어쓰기
+   ·「것·때」는 늘 의존명사 → 앞 글자 받침이 ㄴ/ㄹ(관형형)이면 띄어 쓴다.
+   ·「수·뿐·만큼」은 체언 뒤에서는 조사·보통명사(선수·기술뿐·너만큼)라
+     관형형 어간 목록에 있을 때만 지적한다. */
+function checkDep(t){
+  const out=[];
+  const jong = ch => (ch>='가'&&ch<='힣') ? (ch.charCodeAt(0)-0xAC00)%28 : -1;
+  const JOSA = /^(은|는|이|가|을|를|의|에|도|만|과|와|으로|로|부터|까지|처럼|보다|마다|밖에|이라|라는)/;
+  const STRICT = new Set(['수','뿐','만큼']);
+  for(const n of DEP_NOUN){
+    let i=-1;
+    while((i=t.indexOf(n,i+1))>=0){
+      if(i===0) continue;
+      const prev=t[i-1], j=jong(prev);
+      if(j!==4 && j!==8) continue;                    // ㄴ·ㄹ 받침 = 관형형 가능성
+      if(DEP_EXC.has(prev+n)) continue;
+      const after = t.slice(i+n.length);
+      const okNext = n==='수' && /^\s*(있|없)/.test(after);   // 「~수 있다/없다」
+      if(STRICT.has(n) && !DEP_PRE.includes(prev) && !okNext) continue;
+      if(!okNext && /^[가-힣]/.test(after) && !JOSA.test(after)) continue;  // 더 긴 낱말의 일부
+      out.push({i:i-1, len:1+n.length, hit:prev+n, msg:`「${prev}${n}」 → 「${prev} ${n}」`});
+    }
   }
+  return out;
+}
+function checkLongWord(t){
+  const out=[];
+  for(const m of t.matchAll(/[가-힣]{4,}/g)){
+    if(m[0].length < LONG_WORD) continue;
+    out.push({i:m.index, len:m[0].length, hit:m[0],
+      msg:`「${m[0]}」 — ${m[0].length}자입니다. 띄어쓰기가 빠지지 않았는지 보세요`});
+  }
+  return out;
+}
+function checkPunct(t){
+  const out=[];
+  const P=[[/ {2,}/g,'공백이 두 칸 이상입니다'],
+           [/\s+[.,]/g,'문장부호 앞에 공백이 있습니다'],
+           [/\.{2,}/g,'마침표가 겹쳤습니다'],
+           [/,{2,}/g,'쉼표가 겹쳤습니다'],
+           [/[.,][가-힣]/g,'문장부호 뒤에 공백이 없습니다'],
+           [/^\s+/g,'맨 앞에 공백이 있습니다'],
+           [/\s+$/g,'맨 뒤에 공백이 있습니다']];
+  for(const [re,msg] of P)
+    for(const m of t.matchAll(re)) out.push({i:m.index, len:m[0].length, hit:JSON.stringify(m[0]).slice(1,-1), msg});
+  const tail = t.trimEnd();
+  if(tail && !/[.!?]$/.test(tail))
+    out.push({i:tail.length-1, len:1, hit:tail.slice(-1), msg:'마지막에 마침표가 없습니다'});
+  return out;
+}
+function checkDoubleJosa(t){
+  const out=[];
+  for(const m of t.matchAll(DOUBLE_JOSA))
+    out.push({i:m.index, len:m[0].length, hit:m[0], msg:`「${m[0]}」 — 조사가 겹쳤습니다`});
+  return out;
+}
+function checkBracket(t){
+  const out=[]; const P=[['(',')','괄호'],['‘','’','작은따옴표'],['“','”','큰따옴표'],['「','」','낫표']];
+  for(const [a,b,nm] of P){
+    const na=(t.split(a).length-1), nb=(t.split(b).length-1);
+    if(na!==nb) out.push({i:Math.max(0,t.indexOf(na>nb?a:b)), len:1, hit:na>nb?a:b,
+      msg:`${nm} 개수가 안 맞습니다 (여는 것 ${na}개 / 닫는 것 ${nb}개)`});
+  }
+  return out;
+}
+function checkLongSent(t){
+  const out=[];
+  for(const m of t.matchAll(/[^.!?\n]{200,}[.!?]/g))
+    out.push({i:m.index, len:Math.min(20,m[0].length), hit:m[0].slice(0,18)+'…',
+      msg:`한 문장이 ${[...m[0]].length}자입니다. 끊어 쓰는 편이 읽기 좋습니다`});
   return out;
 }
 function checkEnding(t){
   const out=[];
-  const sents = [...t.matchAll(/[^.!?\n]+[.!?]/g)];
-  for(const s of sents){
-    const body = s[0].trim().replace(/[.!?]$/,'');
-    if(!body) continue;
-    if(!/(함|됨|임|음|짐|옴|줌|짐|봄|섬|힘|남|듦)$/.test(body) && /[가-힣]$/.test(body)){
-      if(/(다|요|네|죠|까)$/.test(body))
-        out.push({i:s.index+s[0].length-3, len:3, hit:body.slice(-3),
-          msg:`「…${body.slice(-4)}」 — 명사형(~함/~임)으로 끝맺으세요`});
-    }
+  for(const m of t.matchAll(/[^.!?\n]+[.!?]/g)){
+    const body=m[0].trim().replace(/[.!?]$/,'');
+    if(!body || !/[가-힣]$/.test(body)) continue;
+    if(/(함|됨|임|음|짐|옴|줌|봄|섬|힘|남|듦)$/.test(body)) continue;
+    if(/(다|요|네|죠|까)$/.test(body))
+      out.push({i:m.index+m[0].length-3, len:3, hit:body.slice(-3),
+        msg:`「…${body.slice(-4)}」 — 명사형(~함/~임)으로 끝맺으세요`});
   }
   return out;
 }
@@ -402,15 +480,14 @@ function checkEnglish(t){
   const out=[];
   for(const m of t.matchAll(/[A-Za-z][A-Za-z.\-]{1,}/g)){
     const w=m[0].replace(/[.\-]+$/,'');
-    if(OK_EN.has(w.toUpperCase())) continue;
-    if(w.length<2) continue;
+    if(w.length<2 || OK_EN.has(w.toUpperCase())) continue;
     out.push({i:m.index, len:m[0].length, hit:m[0], msg:`영문 「${w}」 — 한글로 바꾸거나 일반명사로 대체하세요`});
   }
   return out;
 }
 function checkNames(t, names){
   const out=[];
-  for(const nm of names){
+  for(const nm of names||[]){
     if(!nm || nm.length<2) continue;
     let i=-1;
     while((i=t.indexOf(nm,i+1))>=0) out.push({i, len:nm.length, hit:nm, msg:`학생 이름 「${nm}」이 본문에 있습니다`});
@@ -418,7 +495,9 @@ function checkNames(t, names){
   return out;
 }
 const FN = {josa:checkJosa, dup:checkDup, spell:checkSpell, spacing:checkSpacing,
-            ending:checkEnding, english:checkEnglish, names:checkNames};
+            ending:checkEnding, english:checkEnglish, names:checkNames,
+            depnoun:checkDep, longword:checkLongWord, punct:checkPunct,
+            djosa:checkDoubleJosa, bracket:checkBracket, longsent:checkLongSent};
 
 function inspect(text, names){
   const t = String(text||''); const finds=[];

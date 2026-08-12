@@ -164,22 +164,26 @@ const RULES = [
   },
 
   /* ══════════ 🔵 오탈자 ══════════ */
-  { id:'josa',    sev:'typo', cat:'조사 오류',   ref:'맞춤법', why:'앞 글자의 받침에 맞지 않는 조사입니다.', fn:'josa' },
-  { id:'djosa',   sev:'typo', cat:'조사 겹침',   ref:'맞춤법', why:'조사가 겹쳐 있습니다.', re:null, fn:'djosa' },
-  { id:'dup',     sev:'typo', cat:'어절 중복',   ref:'맞춤법', why:'같은 말이 연달아 나옵니다.', fn:'dup' },
-  { id:'spell',   sev:'typo', cat:'맞춤법',      ref:'맞춤법', why:'자주 틀리는 표기입니다.', fn:'spell' },
-  { id:'spacing', sev:'typo', cat:'띄어쓰기',    ref:'맞춤법', why:'띄어쓰기를 확인하세요.', fn:'spacing' },
-  { id:'depnoun', sev:'typo', cat:'의존명사 띄어쓰기', ref:'맞춤법',
-    why:'「수·것·때·뿐·만큼」은 의존명사라 앞말과 띄어 씁니다.', fn:'depnoun' },
-  { id:'longword',sev:'typo', cat:'긴 어절',     ref:'띄어쓰기',
-    why:'어절이 길어 띄어쓰기가 빠졌을 수 있습니다. 합성어면 그대로 두세요.', fn:'longword' },
-  { id:'punct',   sev:'typo', cat:'문장부호',    ref:'맞춤법',
-    why:'문장부호나 공백이 잘못되었습니다.', fn:'punct' },
-  { id:'jamo',    sev:'typo', cat:'자모·깨진 글자', ref:'입력 오류',
-    why:'홀로 남은 자모나 깨진 글자가 있습니다. NEIS 입력 시 문제가 됩니다.',
-    re:/[\u3131-\u318E\uFFFD]|([가-힣])\1\1/g },
-  { id:'bracket', sev:'typo', cat:'괄호·따옴표', ref:'맞춤법',
-    why:'여는 기호와 닫는 기호의 개수가 맞지 않습니다.', fn:'bracket' },
-  { id:'longsent',sev:'typo', cat:'긴 문장',     ref:'가독성',
-    why:'한 문장이 너무 깁니다. 끊어 쓰면 읽기 쉽습니다.', fn:'longsent' }
+  {
+    id: 'josa', sev: 'typo', cat: '조사 오류', ref: '맞춤법',
+    why: '앞 글자의 받침에 맞지 않는 조사입니다.', fn: 'josa'
+  },
+  {
+    id: 'dup', sev: 'typo', cat: '어절 중복', ref: '맞춤법',
+    why: '같은 말이 연달아 나옵니다.', fn: 'dup'
+  },
+  {
+    id: 'space2', sev: 'typo', cat: '공백 오류', ref: '맞춤법',
+    why: '공백이 두 칸 이상이거나 문장부호 앞에 공백이 있습니다.',
+    re: /( {2,}| +[.,])/g
+  },
+  {
+    id: 'spell', sev: 'typo', cat: '맞춤법', ref: '맞춤법',
+    why: '자주 틀리는 표기입니다.', fn: 'spell'
+  },
+  {
+    id: 'spacing', sev: 'typo', cat: '띄어쓰기', ref: '맞춤법',
+    why: '띄어쓰기를 확인하세요.', fn: 'spacing'
+  }
 ];
+
