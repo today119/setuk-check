@@ -147,6 +147,10 @@ button.ghost:hover{border-color:var(--accent);color:var(--accent)}
   white-space:pre-wrap;word-break:break-word
 }
 mark{border-radius:3px;padding:1px 2px;font-weight:600;background:transparent}
+.sent{
+  text-decoration:underline; text-decoration-style:dotted;
+  text-decoration-color:var(--ink3); text-underline-offset:6px; text-decoration-thickness:1.5px;
+}
 mark.block{background:var(--red-bg);color:var(--red);box-shadow:inset 0 -2px 0 var(--red)}
 mark.check{background:var(--amber-bg);color:var(--amber);box-shadow:inset 0 -2px 0 var(--amber)}
 mark.style{background:var(--slate-bg);color:var(--slate);box-shadow:inset 0 -2px 0 var(--slate)}
@@ -459,9 +463,11 @@ function checkBracket(t){
 }
 function checkLongSent(t){
   const out=[];
-  for(const m of t.matchAll(/[^.!?\n]{200,}[.!?]/g))
-    out.push({i:m.index, len:Math.min(20,m[0].length), hit:m[0].slice(0,18)+'…',
-      msg:`한 문장이 ${[...m[0]].length}자입니다. 끊어 쓰는 편이 읽기 좋습니다`});
+  for(const m of t.matchAll(/[^.!?\n]{200,}[.!?]/g)){
+    const lead = m[0].length - m[0].trimStart().length;   // 앞 공백 제외
+    out.push({i:m.index+lead, len:m[0].length-lead, hit:m[0].trim().slice(0,16)+'…',
+      msg:`한 문장이 ${[...m[0].trim()].length}자입니다. 밑줄 친 부분이 한 문장이며, 끊어 쓰면 읽기 좋습니다`});
+  }
   return out;
 }
 function checkEnding(t){
@@ -527,24 +533,37 @@ function inspect(text, names){
     (g.rule.id===f.rule.id && g.len>f.len))));
 }
 
-/* 하이라이트 — 겹치지 않는 것만 표시 */
+/* 하이라이트
+   · 「긴 문장」은 문장 전체를 점선 밑줄(띠)로 감싼다
+   · 나머지 지적은 그 안에서 겹치지 않게 표시한다 */
 function highlight(t, finds){
   const ORD={block:0,check:1,style:2,typo:3};
-  const marks=[...finds].sort((a,b)=> ORD[a.rule.sev]-ORD[b.rule.sev] || a.i-b.i);
-  const used=[]; const use=[];
-  for(const f of marks){
-    if(f.i==null||f.len<=0) continue;
-    const a=f.i,b=f.i+f.len;
-    if(used.some(([x,y])=>a<y&&b>x)) continue;
-    used.push([a,b]); use.push(f);
-  }
-  use.sort((a,b)=>a.i-b.i);
-  let html='', p=0;
   const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  for(const f of use){
-    html += esc(t.slice(p,f.i));
-    html += `<mark class="${f.rule.sev}" title="${esc(f.rule.cat)}">${esc(t.slice(f.i,f.i+f.len))}</mark>`;
-    p = f.i+f.len;
+
+  const bands = finds.filter(f=>f.rule.id==='longsent' && f.i!=null && f.len>0)
+    .map(f=>({a:f.i, b:f.i+f.len})).sort((x,y)=>x.a-y.a);
+
+  const cand=[...finds].filter(f=>f.rule.id!=='longsent' && f.i!=null && f.len>0)
+    .sort((a,b)=> ORD[a.rule.sev]-ORD[b.rule.sev] || a.i-b.i);
+  const marks=[];
+  for(const f of cand){
+    const a=f.i,b=f.i+f.len;
+    if(marks.some(m=>a<m.b && b>m.a)) continue;
+    marks.push({a,b,sev:f.rule.sev,cat:f.rule.cat});
+  }
+  marks.sort((x,y)=>x.a-y.a);
+
+  const ev=[];
+  bands.forEach(x=>{ ev.push({p:x.a,o:1,k:'band'}); ev.push({p:x.b,o:0,k:'band'}); });
+  marks.forEach(x=>{ ev.push({p:x.a,o:1,k:'mark',m:x}); ev.push({p:x.b,o:0,k:'mark'}); });
+  // 같은 위치: 닫기 먼저(mark→band), 열기는 band 먼저
+  ev.sort((x,y)=> x.p-y.p || x.o-y.o || (x.o? (x.k==='band'?-1:1) : (x.k==='mark'?-1:1)));
+
+  let html='', p=0;
+  for(const e of ev){
+    html += esc(t.slice(p,e.p)); p=e.p;
+    if(e.k==='band') html += e.o ? '<span class="sent">' : '</span>';
+    else html += e.o ? `<mark class="${e.m.sev}" title="${esc(e.m.cat)}">` : '</mark>';
   }
   return html + esc(t.slice(p));
 }
