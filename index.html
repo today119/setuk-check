@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세특 점검기 — 기재요령 위반·오탈자 검토</title>
+<meta name="description" content="NEIS에서 내려받은 세부능력 및 특기사항 엑셀을 올리면 기재요령 금지 내용·분량 초과·오탈자를 검사합니다. 파일은 서버로 전송되지 않습니다.">
+<style>
+:root{
+  --ink:#16202e; --ink2:#3d4c62; --ink3:#6b7a90;
+  --paper:#fbfaf7; --card:#ffffff; --line:#e4e0d8;
+  --accent:#1c5d8c; --accent-soft:#e8f0f6;
+  --red:#b4232a; --red-bg:#fcecec;
+  --amber:#9a6510; --amber-bg:#fdf3e2;
+  --slate:#4a5a73; --slate-bg:#eef1f5;
+  --blue:#1f6a6f; --blue-bg:#e6f2f1;
+  --ok:#2f6b45;
+  --shadow:0 1px 2px rgba(22,32,46,.06),0 6px 20px rgba(22,32,46,.06);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#e8eaee; --ink2:#b3bcca; --ink3:#8593a8;
+    --paper:#12161d; --card:#1a1f28; --line:#2c3441;
+    --accent:#6fb2df; --accent-soft:#1c2a36;
+    --red:#f08a8f; --red-bg:#2e1a1c;
+    --amber:#e5b264; --amber-bg:#2d2417;
+    --slate:#9fb0c8; --slate-bg:#1e242e;
+    --blue:#6fc4c8; --blue-bg:#152726;
+    --ok:#7dc499;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e8eaee; --ink2:#b3bcca; --ink3:#8593a8;
+  --paper:#12161d; --card:#1a1f28; --line:#2c3441;
+  --accent:#6fb2df; --accent-soft:#1c2a36;
+  --red:#f08a8f; --red-bg:#2e1a1c;
+  --amber:#e5b264; --amber-bg:#2d2417;
+  --slate:#9fb0c8; --slate-bg:#1e242e;
+  --blue:#6fc4c8; --blue-bg:#152726;
+  --ok:#7dc499;
+}
+:root[data-theme="light"]{
+  --ink:#16202e; --ink2:#3d4c62; --ink3:#6b7a90;
+  --paper:#fbfaf7; --card:#ffffff; --line:#e4e0d8;
+  --accent:#1c5d8c; --accent-soft:#e8f0f6;
+  --red:#b4232a; --red-bg:#fcecec;
+  --amber:#9a6510; --amber-bg:#fdf3e2;
+  --slate:#4a5a73; --slate-bg:#eef1f5;
+  --blue:#1f6a6f; --blue-bg:#e6f2f1;
+  --ok:#2f6b45;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--sans);
+  font-size:15.5px; line-height:1.72; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px 90px}
+
+/* ── 헤더 ── */
+header{padding:38px 0 22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.brandrow{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+h1{font-size:1.62rem;font-weight:750;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.sub{color:var(--ink3);font-size:.93rem;margin:7px 0 0}
+.themebtn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink3);
+  border-radius:8px;padding:6px 11px;font-size:.82rem;cursor:pointer;font-family:inherit}
+.themebtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── 안내 배너 ── */
+.privacy{
+  display:flex;gap:12px;align-items:flex-start;
+  background:var(--blue-bg);border:1px solid color-mix(in srgb,var(--blue) 30%,transparent);
+  border-radius:12px;padding:15px 17px;margin:0 0 26px
+}
+.privacy b{color:var(--blue)}
+.privacy p{margin:0;font-size:.92rem;color:var(--ink2)}
+.privacy .ic{font-size:1.3rem;line-height:1.2}
+
+/* ── 드롭존 ── */
+.drop{
+  border:2px dashed var(--line);border-radius:16px;background:var(--card);
+  padding:44px 24px;text-align:center;transition:.16s;cursor:pointer;box-shadow:var(--shadow)
+}
+.drop:hover,.drop.on{border-color:var(--accent);background:var(--accent-soft)}
+.drop h2{margin:0 0 6px;font-size:1.08rem;font-weight:700}
+.drop p{margin:0;color:var(--ink3);font-size:.9rem}
+.drop .big{font-size:2.1rem;margin-bottom:10px;opacity:.7}
+input[type=file]{display:none}
+
+.orbar{display:flex;align-items:center;gap:14px;margin:22px 0 12px;color:var(--ink3);font-size:.85rem}
+.orbar::before,.orbar::after{content:"";flex:1;height:1px;background:var(--line)}
+textarea{
+  width:100%;min-height:130px;border:1px solid var(--line);border-radius:12px;padding:14px;
+  font-family:inherit;font-size:.95rem;line-height:1.7;background:var(--card);color:var(--ink);resize:vertical
+}
+textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+
+button.go{
+  background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 22px;
+  font-size:.95rem;font-weight:650;cursor:pointer;font-family:inherit;margin-top:12px
+}
+button.go:hover{filter:brightness(1.08)}
+button.go:disabled{opacity:.45;cursor:default}
+button.ghost{
+  background:none;border:1px solid var(--line);color:var(--ink2);border-radius:9px;
+  padding:9px 16px;font-size:.88rem;cursor:pointer;font-family:inherit
+}
+button.ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── 요약 ── */
+.summary{margin:34px 0 8px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:12px;margin:16px 0 26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.stat .n{font-size:1.7rem;font-weight:750;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.8rem;color:var(--ink3);margin-top:2px}
+.stat.red .n{color:var(--red)} .stat.amber .n{color:var(--amber)}
+.stat.slate .n{color:var(--slate)} .stat.blue .n{color:var(--blue)}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{
+  border:1px solid var(--line);background:var(--card);color:var(--ink2);border-radius:999px;
+  padding:6px 14px;font-size:.84rem;cursor:pointer;font-family:inherit
+}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ── 학생 카드 ── */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)
+}
+.card.clean{opacity:.72}
+.chead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.who{font-weight:720;font-size:1.03rem}
+.pos{color:var(--ink3);font-size:.84rem;font-family:var(--mono)}
+.bytes{margin-left:auto;font-size:.83rem;color:var(--ink3);font-variant-numeric:tabular-nums}
+.bytes.over{color:var(--red);font-weight:700}
+.bar{height:4px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.bar i{display:block;height:100%;background:var(--ok);transition:.3s}
+.bar i.warn{background:var(--amber)} .bar i.over{background:var(--red)}
+
+.text{
+  font-size:.94rem;line-height:1.85;color:var(--ink2);
+  background:var(--paper);border-radius:10px;padding:13px 15px;margin-bottom:12px;
+  white-space:pre-wrap;word-break:break-word
+}
+mark{border-radius:3px;padding:1px 2px;font-weight:600;background:transparent}
+mark.block{background:var(--red-bg);color:var(--red);box-shadow:inset 0 -2px 0 var(--red)}
+mark.check{background:var(--amber-bg);color:var(--amber);box-shadow:inset 0 -2px 0 var(--amber)}
+mark.style{background:var(--slate-bg);color:var(--slate);box-shadow:inset 0 -2px 0 var(--slate)}
+mark.typo{background:var(--blue-bg);color:var(--blue);box-shadow:inset 0 -2px 0 var(--blue)}
+
+.finds{display:flex;flex-direction:column;gap:7px}
+.find{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.6}
+.tag{
+  flex:none;font-size:.72rem;font-weight:700;border-radius:6px;padding:2px 8px;
+  white-space:nowrap;margin-top:2px
+}
+.tag.block{background:var(--red-bg);color:var(--red)}
+.tag.check{background:var(--amber-bg);color:var(--amber)}
+.tag.style{background:var(--slate-bg);color:var(--slate)}
+.tag.typo{background:var(--blue-bg);color:var(--blue)}
+.find .body{color:var(--ink2)}
+.find .hit{font-family:var(--mono);background:var(--paper);border:1px solid var(--line);
+  border-radius:4px;padding:0 5px;font-size:.86em;color:var(--ink)}
+.find .ref{color:var(--ink3);font-size:.82em}
+.nofind{color:var(--ok);font-size:.88rem;font-weight:600}
+
+/* ── 하단 ── */
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0}
+details.help{margin-top:34px;border-top:1px solid var(--line);padding-top:22px}
+details.help summary{cursor:pointer;font-weight:650;color:var(--ink2);font-size:.95rem}
+details.help .in{font-size:.9rem;color:var(--ink2);line-height:1.8}
+details.help li{margin-bottom:5px}
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);
+  color:var(--ink3);font-size:.83rem;line-height:1.75}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:460px}
+th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{color:var(--ink3);font-weight:650;font-size:.82rem}
+.err{background:var(--red-bg);color:var(--red);border-radius:10px;padding:13px 16px;font-size:.9rem;margin:16px 0}
+@media(max-width:560px){
+  .wrap{padding:0 14px 70px} h1{font-size:1.35rem} .drop{padding:32px 16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brandrow">
+    <div>
+      <h1>세특 점검기</h1>
+      <p class="sub">기재요령 금지 내용 · 분량 초과 · 오탈자를 한 번에 검토합니다</p>
+    </div>
+    <button class="themebtn" id="themebtn" type="button">화면 전환</button>
+  </div>
+</header>
+
+<div class="privacy">
+  <span class="ic">🔒</span>
+  <p><b>파일은 서버로 전송되지 않습니다.</b> 검사는 전부 이 브라우저 안에서만 이루어지며, 학생 이름과 세특 내용은 선생님 컴퓨터 밖으로 나가지 않습니다. 저장되는 것도 없어 새로고침하면 사라집니다.</p>
+</div>
+
+<div class="drop" id="drop">
+  <div class="big">📄</div>
+  <h2>엑셀 파일을 여기에 끌어다 놓으세요</h2>
+  <p>NEIS → 성적 → 과목별 세부능력 및 특기사항 → 엑셀 내려받기 (.xlsx)</p>
+  <input type="file" id="file" accept=".xlsx">
+</div>
+
+<div class="orbar">또는 문장을 직접 붙여넣기</div>
+<textarea id="ta" placeholder="세특 문장을 붙여넣으세요. 여러 명이면 한 줄에 한 명씩 넣으면 됩니다."></textarea>
+<button class="go" id="gota" type="button">붙여넣은 내용 검사</button>
+
+<div id="out"></div>
+
+<details class="help">
+  <summary>어떤 기준으로 검사하나요?</summary>
+  <div class="in">
+    <p>2026학년도 <b>학교생활기록부 기재요령(고등학교)</b>을 근거로 합니다.</p>
+    <div class="tblwrap"><table>
+      <tr><th>구분</th><th>검사 내용</th><th>근거</th></tr>
+      <tr><td><span class="tag block">금지</span></td><td>공인어학시험 · 대회 참여와 수상 · 모의고사 성적 · 논문/출간/지식재산권 · 소논문 · MOOC · 방과후학교 · 해외활동 · 자격증 · 인증시험 · 장학금 · 부모 지위 · 학교명</td><td>유의사항 3항, 제13조</td></tr>
+      <tr><td><span class="tag check">확인</span></td><td>순위·등수 표현 · 대학/학원/상호명 · 특정 앱·상표명 · 학생 실명 · 1인칭 · 구체적 점수</td><td>문맥 판단 필요</td></tr>
+      <tr><td><span class="tag style">형식</span></td><td>1,500Byte(500자) 초과 · 문장 종결 · 영문 사용 · 특수문자·이모지</td><td>제4조③</td></tr>
+      <tr><td><span class="tag typo">오탈자</span></td><td>조사 오류 · 어절 중복 · 이중 공백 · 맞춤법 · 띄어쓰기</td><td>—</td></tr>
+    </table></div>
+    <p style="margin-top:14px"><b>글자 수 기준</b> — NEIS는 한글·한자 1자를 <b>3Byte</b>, 영문·숫자·공백을 1Byte로 셉니다. 과목별 세부능력 및 특기사항은 <b>500자(1,500Byte)</b>가 한도입니다.</p>
+    <p><b>「확인」 표시는 무조건 잘못이라는 뜻이 아닙니다.</b> 예를 들어 수업 중 리그전의 「우승」은 대회 성적이 아니므로 그대로 두셔도 됩니다. 기계가 판단할 수 없는 부분이라 사람이 보시라고 표시합니다.</p>
+  </div>
+</details>
+
+<details class="help">
+  <summary>NEIS 엑셀은 어떻게 내려받나요?</summary>
+  <div class="in">
+    <ol>
+      <li>NEIS 접속 → <b>성적</b> → <b>성적처리</b> → <b>과목별세부능력및특기사항</b></li>
+      <li>학년·학기·과목·반을 고르고 조회</li>
+      <li>화면의 <b>엑셀 내려받기</b> 버튼으로 저장 (.xlsx)</li>
+      <li>그 파일을 그대로 이 화면에 끌어다 놓으면 됩니다 — 고칠 필요 없습니다</li>
+    </ol>
+    <p>「세부능력 및 특기사항」 열을 자동으로 찾습니다. 열 이름이 달라도 가장 긴 글이 들어 있는 열을 찾아 검사합니다.</p>
+  </div>
+</details>
+
+<footer>
+  세특 점검기 · 2026학년도 학교생활기록부 기재요령(고등학교) 기준<br>
+  이 도구는 <b>보조 수단</b>입니다. 최종 판단과 책임은 작성 교사에게 있으며, 애매한 사항은 교육지원청에 질의하시기 바랍니다.<br>
+  검사 결과가 없다고 해서 기재요령을 모두 지켰다는 뜻은 아닙니다.
+</footer>
+
+</div>
+
+<script src="rules.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   1. XLSX 읽기 — 외부 라이브러리 없이 브라우저 기본 기능만 사용
+      (ZIP 파싱 + DecompressionStream('deflate-raw') + DOMParser)
+   ══════════════════════════════════════════ */
+async function inflateRaw(u8){
+  if(!u8.length) return new Uint8Array(0);
+  const s = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+async function unzip(buf){
+  const dv = new DataView(buf), len = buf.byteLength, out = {};
+  let eocd = -1;
+  for(let i=len-22;i>=Math.max(0,len-66000);i--){ if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;} }
+  if(eocd<0) throw new Error('엑셀 파일 형식이 아닙니다(ZIP 구조를 찾을 수 없음).');
+  const n = dv.getUint16(eocd+10,true);
+  let p = dv.getUint32(eocd+16,true);
+  const dec = new TextDecoder('utf-8');
+  for(let k=0;k<n;k++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const method = dv.getUint16(p+10,true);
+    const csize  = dv.getUint32(p+20,true);
+    const fnLen  = dv.getUint16(p+28,true);
+    const exLen  = dv.getUint16(p+30,true);
+    const cmLen  = dv.getUint16(p+32,true);
+    const lho    = dv.getUint32(p+42,true);
+    const name   = dec.decode(new Uint8Array(buf,p+46,fnLen));
+    const lfn = dv.getUint16(lho+26,true), lex = dv.getUint16(lho+28,true);
+    const start = lho+30+lfn+lex;
+    const raw = new Uint8Array(buf, start, csize);
+    out[name] = method===0 ? {stored:raw} : {deflate:raw};
+    p += 46+fnLen+exLen+cmLen;
+  }
+  const res = {};
+  for(const [k,v] of Object.entries(out)){
+    res[k] = v.stored ? v.stored : await inflateRaw(v.deflate);
+  }
+  return res;
+}
+const colNum = ref => { let n=0; for(const ch of ref){ if(ch<'A'||ch>'Z') break; n=n*26+(ch.charCodeAt(0)-64);} return n; };
+
+async function parseXlsx(buf){
+  const files = await unzip(buf);
+  const td = new TextDecoder('utf-8');
+  const dp = new DOMParser();
+  // 공유 문자열
+  let shared = [];
+  if(files['xl/sharedStrings.xml']){
+    const d = dp.parseFromString(td.decode(files['xl/sharedStrings.xml']),'application/xml');
+    shared = [...d.getElementsByTagName('si')].map(si =>
+      [...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
+  }
+  // 워크시트 — 여러 개면 세특 데이터가 가장 많은 것을 고름
+  const sheetNames = Object.keys(files).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k)).sort();
+  let best=null;
+  for(const sn of sheetNames){
+    const d = dp.parseFromString(td.decode(files[sn]),'application/xml');
+    const rows=[];
+    for(const r of d.getElementsByTagName('row')){
+      const arr=[];
+      for(const c of r.getElementsByTagName('c')){
+        const ci = colNum(c.getAttribute('r')||'A')-1;
+        const t = c.getAttribute('t');
+        let v='';
+        if(t==='s'){ const iv=c.getElementsByTagName('v')[0]; v = iv? (shared[+iv.textContent]||'') : ''; }
+        else if(t==='inlineStr'){ v = [...c.getElementsByTagName('t')].map(x=>x.textContent).join(''); }
+        else { const iv=c.getElementsByTagName('v')[0]; v = iv? iv.textContent : ''; }
+        arr[ci]=v;
+      }
+      rows.push(arr);
+    }
+    const score = rows.reduce((a,r)=>a+r.reduce((b,c)=>b+((c||'').length>60?1:0),0),0);
+    if(!best || score>best.score) best={rows,score};
+  }
+  if(!best) throw new Error('시트를 찾을 수 없습니다.');
+  return best.rows;
+}
+
+/* ══════════════════════════════════════════
+   2. 검사 엔진
+   ══════════════════════════════════════════ */
+const LIMIT = 1500;
+const neisBytes = s => { let n=0; for(const c of String(s||'')) n += (c>='가'&&c<='힣')||(c>='ㄱ'&&c<='ㅣ')||(c>='一'&&c<='鿿') ? 3 : 1; return n; };
+const hasBatchim = ch => (ch>='가'&&ch<='힣') ? (ch.charCodeAt(0)-0xAC00)%28!==0 : null;
+
+/* 조사 검사는 을/를만 본다.
+   은/는·이/가·과/와는 관형형 어미(-는, -은)·의문형 어미(-는가)·
+   명사 일부(효과, 결과, 차이 …)와 구별할 수 없어 오탐이 너무 많다.
+   을/를은 안전하다 — 받침 없는 글자 뒤의 「을」과 받침 있는 글자 뒤의 「를」은
+   조사로만 쓰이며, 관형형 어미는 받침 없는 어간에 -ㄹ로 붙기 때문. */
+const JOSA_EXC = new Set(['가을','마을','조을','그을','거을','노을','서을']);
+function checkJosa(t){
+  const out=[];
+  for(const m of t.matchAll(/([가-힣])(을|를)(?=[\s,.)\]]|$)/g)){
+    const b = hasBatchim(m[1]); if(b===null) continue;
+    if(JOSA_EXC.has(m[0])) continue;
+    const wrong = (m[2]==='을' && !b) || (m[2]==='를' && b);
+    if(wrong){
+      const fix = m[2]==='을' ? '를' : '을';
+      out.push({i:m.index, len:m[0].length, hit:m[0], msg:`「${m[1]}${m[2]}」 → 「${m[1]}${fix}」`});
+    }
+  }
+  return out;
+}
+function checkDup(t){
+  const out=[];
+  for(const m of t.matchAll(/([가-힣]{2,6})\s+\1(?=[\s,.]|$)/g))
+    out.push({i:m.index, len:m[0].length, hit:m[0], msg:`「${m[1]}」이(가) 두 번 반복됩니다`});
+  for(const m of t.matchAll(/(하였음|하였고|함)\.\s*\1/g))
+    out.push({i:m.index, len:m[0].length, hit:m[0], msg:'같은 종결이 연달아 나옵니다'});
+  return out;
+}
+function checkSpell(t){
+  const out=[];
+  for(const [bad,good,note] of SPELL){
+    if(!bad || bad.startsWith('~') || bad.length<2) continue;
+    let i=-1;
+    while((i=t.indexOf(bad,i+1))>=0)
+      out.push({i, len:bad.length, hit:bad, msg: good? `「${bad}」 → 「${good}」${note?' · '+note:''}` : note});
+  }
+  return out;
+}
+function checkSpacing(t){
+  const out=[];
+  for(const [re,fix] of SPACING){
+    for(const m of t.matchAll(re)) out.push({i:m.index, len:m[0].length, hit:m[0], msg:`「${m[0]}」 → 「${fix}」`});
+  }
+  return out;
+}
+function checkEnding(t){
+  const out=[];
+  const sents = [...t.matchAll(/[^.!?\n]+[.!?]/g)];
+  for(const s of sents){
+    const body = s[0].trim().replace(/[.!?]$/,'');
+    if(!body) continue;
+    if(!/(함|됨|임|음|짐|옴|줌|짐|봄|섬|힘|남|듦)$/.test(body) && /[가-힣]$/.test(body)){
+      if(/(다|요|네|죠|까)$/.test(body))
+        out.push({i:s.index+s[0].length-3, len:3, hit:body.slice(-3),
+          msg:`「…${body.slice(-4)}」 — 명사형(~함/~임)으로 끝맺으세요`});
+    }
+  }
+  return out;
+}
+function checkEnglish(t){
+  const out=[];
+  for(const m of t.matchAll(/[A-Za-z][A-Za-z.\-]{1,}/g)){
+    const w=m[0].replace(/[.\-]+$/,'');
+    if(OK_EN.has(w.toUpperCase())) continue;
+    if(w.length<2) continue;
+    out.push({i:m.index, len:m[0].length, hit:m[0], msg:`영문 「${w}」 — 한글로 바꾸거나 일반명사로 대체하세요`});
+  }
+  return out;
+}
+function checkNames(t, names){
+  const out=[];
+  for(const nm of names){
+    if(!nm || nm.length<2) continue;
+    let i=-1;
+    while((i=t.indexOf(nm,i+1))>=0) out.push({i, len:nm.length, hit:nm, msg:`학생 이름 「${nm}」이 본문에 있습니다`});
+  }
+  return out;
+}
+const FN = {josa:checkJosa, dup:checkDup, spell:checkSpell, spacing:checkSpacing,
+            ending:checkEnding, english:checkEnglish, names:checkNames};
+
+function inspect(text, names){
+  const t = String(text||''); const finds=[];
+  for(const r of RULES){
+    if(r.fn){
+      const hits = FN[r.fn] ? FN[r.fn](t, names||[]) : [];
+      for(const h of hits) finds.push({rule:r, i:h.i, len:h.len, hit:h.hit, extra:h.msg});
+    } else if(r.re){
+      r.re.lastIndex = 0;
+      for(const m of t.matchAll(r.re)){
+        if(!m[0].trim()) continue;
+        finds.push({rule:r, i:m.index, len:m[0].length, hit:m[0].trim()});
+      }
+    }
+  }
+  // 겹치는 구간 정리 — 심각한 것 우선
+  const ORD={block:0,check:1,style:2,typo:3};
+  finds.sort((a,b)=> a.i-b.i || ORD[a.rule.sev]-ORD[b.rule.sev] || b.len-a.len);
+  const kept=[];
+  for(const f of finds){
+    if(kept.some(k=>k.rule.id===f.rule.id && k.i===f.i)) continue;
+    kept.push(f);
+  }
+  // 더 중한 지적이 이미 덮고 있는 구간의 하위 등급 지적은 숨긴다
+  return kept.filter(f => !kept.some(g =>
+    ORD[g.rule.sev] < ORD[f.rule.sev] && f.i>=g.i && f.i+f.len<=g.i+g.len));
+}
+
+/* 하이라이트 — 겹치지 않는 것만 표시 */
+function highlight(t, finds){
+  const ORD={block:0,check:1,style:2,typo:3};
+  const marks=[...finds].sort((a,b)=> ORD[a.rule.sev]-ORD[b.rule.sev] || a.i-b.i);
+  const used=[]; const use=[];
+  for(const f of marks){
+    if(f.i==null||f.len<=0) continue;
+    const a=f.i,b=f.i+f.len;
+    if(used.some(([x,y])=>a<y&&b>x)) continue;
+    used.push([a,b]); use.push(f);
+  }
+  use.sort((a,b)=>a.i-b.i);
+  let html='', p=0;
+  const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  for(const f of use){
+    html += esc(t.slice(p,f.i));
+    html += `<mark class="${f.rule.sev}" title="${esc(f.rule.cat)}">${esc(t.slice(f.i,f.i+f.len))}</mark>`;
+    p = f.i+f.len;
+  }
+  return html + esc(t.slice(p));
+}
+
+/* ══════════════════════════════════════════
+   3. 화면
+   ══════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+let RESULT = [], FILTER='all', SRCNAME='검사결과';
+
+function findCols(rows){
+  const head = rows[0]||[];
+  let textCol=-1, nameCol=-1, noCol=-1;
+  head.forEach((h,i)=>{
+    const s=String(h||'').replace(/\s|_x000D_/g,'');
+    if(/세부능력|특기사항/.test(s) && textCol<0) textCol=i;
+    if(/^성명$|이름/.test(s)) nameCol=i;
+    if(/반\/?번호|번호/.test(s) && noCol<0 && !/개인번호/.test(s)) noCol=i;
+  });
+  if(textCol<0){ // 가장 긴 글이 많은 열
+    const score=[];
+    rows.slice(1).forEach(r=>r.forEach((c,i)=>{ score[i]=(score[i]||0)+(String(c||'').length>60?1:0); }));
+    textCol = score.indexOf(Math.max(...score.map(x=>x||0)));
+  }
+  return {textCol,nameCol,noCol};
+}
+
+function run(rows){
+  const {textCol,nameCol,noCol} = findCols(rows);
+  const names = nameCol>=0 ? rows.slice(1).map(r=>String(r[nameCol]||'').trim()).filter(x=>x.length>=2) : [];
+  RESULT = rows.slice(1).map((r,idx)=>{
+    const text = String(r[textCol]||'').trim();
+    if(!text) return null;
+    const nm = nameCol>=0 ? String(r[nameCol]||'').trim() : `${idx+1}번`;
+    const others = names.filter(x=>x!==nm);
+    return {no: noCol>=0? String(r[noCol]||'') : String(idx+1), name:nm, text,
+            bytes:neisBytes(text), chars:[...text].length, finds:inspect(text, others), row:idx+2};
+  }).filter(Boolean);
+  render();
+}
+
+function render(){
+  if(!RESULT.length){ $('#out').innerHTML=`<div class="err">검사할 내용을 찾지 못했습니다. 세특 문장이 들어 있는 파일인지 확인해 주세요.</div>`; return; }
+  const cnt={block:0,check:0,style:0,typo:0,over:0,clean:0};
+  RESULT.forEach(s=>{
+    s.finds.forEach(f=>cnt[f.rule.sev]++);
+    if(s.bytes>LIMIT) cnt.over++;
+    if(!s.finds.length && s.bytes<=LIMIT) cnt.clean++;
+  });
+  const chip=(k,l)=>`<button class="chip ${FILTER===k?'on':''}" data-f="${k}" type="button">${l}</button>`;
+  let h = `<div class="summary">
+    <div class="statgrid">
+      <div class="stat"><div class="n">${RESULT.length}</div><div class="l">검사한 학생</div></div>
+      <div class="stat red"><div class="n">${cnt.block}</div><div class="l">🔴 기재 금지</div></div>
+      <div class="stat amber"><div class="n">${cnt.check}</div><div class="l">🟠 확인 필요</div></div>
+      <div class="stat slate"><div class="n">${cnt.style}</div><div class="l">⚪ 형식</div></div>
+      <div class="stat blue"><div class="n">${cnt.typo}</div><div class="l">🔵 오탈자</div></div>
+      <div class="stat red"><div class="n">${cnt.over}</div><div class="l">분량 초과</div></div>
+    </div>
+    <div class="filters">
+      ${chip('all','전체')}${chip('block','🔴 기재 금지')}${chip('check','🟠 확인 필요')}
+      ${chip('style','⚪ 형식')}${chip('typo','🔵 오탈자')}${chip('over','분량 초과')}${chip('clean','이상 없음')}
+    </div></div>`;
+
+  const list = RESULT.filter(s=>{
+    if(FILTER==='all') return true;
+    if(FILTER==='over') return s.bytes>LIMIT;
+    if(FILTER==='clean') return !s.finds.length && s.bytes<=LIMIT;
+    return s.finds.some(f=>f.rule.sev===FILTER);
+  });
+
+  for(const s of list){
+    const pct = Math.min(100, s.bytes/LIMIT*100);
+    const cls = s.bytes>LIMIT?'over':(pct>92?'warn':'');
+    const shown = FILTER==='all'||FILTER==='over'||FILTER==='clean'
+      ? s.finds : s.finds.filter(f=>f.rule.sev===FILTER);
+    h += `<div class="card ${!s.finds.length&&s.bytes<=LIMIT?'clean':''}">
+      <div class="chead">
+        <span class="who">${esc(s.name)}</span>
+        <span class="pos">${esc(s.no)} · ${s.row}행</span>
+        <span class="bytes ${s.bytes>LIMIT?'over':''}">${s.chars}자 · ${s.bytes.toLocaleString()} / 1,500 Byte${s.bytes>LIMIT?` (${s.bytes-LIMIT} 초과)`:''}</span>
+      </div>
+      <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
+      <div class="text">${highlight(s.text, s.finds)}</div>`;
+    if(!shown.length){
+      h += `<div class="nofind">✓ 걸린 항목이 없습니다</div>`;
+    } else {
+      h += `<div class="finds">`;
+      for(const f of shown){
+        h += `<div class="find"><span class="tag ${f.rule.sev}">${esc(f.rule.cat)}</span>
+          <span class="body"><span class="hit">${esc(f.hit)}</span> — ${esc(f.extra||f.rule.why)}
+          <span class="ref">［${esc(f.rule.ref)}］</span></span></div>`;
+      }
+      h += `</div>`;
+    }
+    h += `</div>`;
+  }
+  h += `<div class="actions">
+    <button class="ghost" id="dlxlsx" type="button">검토의견 붙인 엑셀 내려받기</button>
+    <button class="ghost" id="dltxt" type="button">텍스트로 저장</button>
+    <button class="ghost" id="reset" type="button">다시 검사</button></div>`;
+  $('#out').innerHTML = h;
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{FILTER=b.dataset.f;render();window.scrollTo({top:$('#out').offsetTop-20,behavior:'instant'});});
+  $('#dlxlsx').onclick = dlXlsx; $('#dltxt').onclick = dlTxt;
+  $('#reset').onclick = ()=>{RESULT=[];$('#out').innerHTML='';$('#ta').value='';window.scrollTo({top:0,behavior:'smooth'});};
+}
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function opinionOf(s){
+  if(!s.finds.length && s.bytes<=LIMIT) return '이상 없음';
+  const g={block:[],check:[],style:[],typo:[]};
+  s.finds.forEach(f=>g[f.rule.sev].push(`${f.rule.cat}: ${f.hit}`));
+  const parts=[];
+  if(s.bytes>LIMIT) parts.push(`[분량] ${s.bytes}B — ${s.bytes-LIMIT}Byte 초과`);
+  if(g.block.length) parts.push('[기재금지] '+[...new Set(g.block)].join(', '));
+  if(g.check.length) parts.push('[확인필요] '+[...new Set(g.check)].join(', '));
+  if(g.style.length) parts.push('[형식] '+[...new Set(g.style)].join(', '));
+  if(g.typo.length)  parts.push('[오탈자] '+[...new Set(g.typo)].join(', '));
+  return parts.join('\n');
+}
+function dlTxt(){
+  let t = `세특 점검 결과 — ${SRCNAME}\n검사 ${RESULT.length}명 · 기준: 2026 학교생활기록부 기재요령(고등학교)\n${'='.repeat(52)}\n\n`;
+  for(const s of RESULT) t += `${s.no} ${s.name} (${s.chars}자 / ${s.bytes}B)\n${opinionOf(s)}\n\n`;
+  save(new Blob([t],{type:'text/plain;charset=utf-8'}), `세특점검_${SRCNAME}.txt`);
+}
+
+/* 최소 XLSX 쓰기 — 무압축(stored) ZIP */
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+const crc32=u8=>{let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRCT[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;};
+function zipStored(entries){
+  const enc=new TextEncoder(); const parts=[]; const cd=[]; let off=0;
+  for(const [name,text] of entries){
+    const nb=enc.encode(name), db=enc.encode(text), crc=crc32(db);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true);
+    lh.setUint16(8,0,true); lh.setUint32(14,crc,true);
+    lh.setUint32(18,db.length,true); lh.setUint32(22,db.length,true);
+    lh.setUint16(26,nb.length,true); lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nb,db);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true);
+    ch.setUint16(8,0x0800,true); ch.setUint16(10,0,true); ch.setUint32(16,crc,true);
+    ch.setUint32(20,db.length,true); ch.setUint32(24,db.length,true);
+    ch.setUint16(28,nb.length,true); ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nb);
+    off += 30+nb.length+db.length;
+  }
+  const cdStart=off; let cdLen=0; cd.forEach(x=>cdLen+=x.length);
+  const eo=new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true); eo.setUint16(8,entries.length,true); eo.setUint16(10,entries.length,true);
+  eo.setUint32(12,cdLen,true); eo.setUint32(16,cdStart,true);
+  return new Blob([...parts,...cd,new Uint8Array(eo.buffer)],
+    {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function dlXlsx(){
+  const X = s => String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');
+  const head=['반/번호','성명','글자수','Byte','1500초과','검토의견','세부능력 및 특기사항'];
+  const rows=[head, ...RESULT.map(s=>[s.no,s.name,s.chars,s.bytes,s.bytes>LIMIT?'초과':'',opinionOf(s),s.text])];
+  const CL='ABCDEFG';
+  const sheet = rows.map((r,ri)=>'<row r="'+(ri+1)+'">'+r.map((c,ci)=>
+      typeof c==='number'
+        ? `<c r="${CL[ci]}${ri+1}"><v>${c}</v></c>`
+        : `<c r="${CL[ci]}${ri+1}" t="inlineStr"><is><t xml:space="preserve">${X(c)}</t></is></c>`
+    ).join('')+'</row>').join('');
+  save(zipStored([
+    ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+    ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="점검결과" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
+    ['xl/worksheets/sheet1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="10"/><col min="2" max="2" width="10"/><col min="3" max="5" width="8"/><col min="6" max="6" width="52"/><col min="7" max="7" width="90"/></cols><sheetData>'+sheet+'</sheetData></worksheet>']
+  ]), `세특점검_${SRCNAME}.xlsx`);
+}
+function save(blob,name){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+
+/* 입력 */
+const drop=$('#drop'), file=$('#file');
+drop.onclick=()=>file.click();
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('on');}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('on');}));
+drop.addEventListener('drop',ev=>{ if(ev.dataTransfer.files[0]) load(ev.dataTransfer.files[0]); });
+file.onchange=()=>{ if(file.files[0]) load(file.files[0]); };
+async function load(f){
+  SRCNAME = f.name.replace(/\.xlsx?$/i,'');
+  $('#out').innerHTML = `<div class="err" style="background:var(--accent-soft);color:var(--accent)">읽는 중…</div>`;
+  try{
+    if(!/\.xlsx$/i.test(f.name)) throw new Error('.xlsx 파일만 됩니다. 예전 .xls 형식이면 엑셀에서 「다른 이름으로 저장 → .xlsx」 하신 뒤 올려주세요.');
+    if(typeof DecompressionStream==='undefined') throw new Error('이 브라우저는 지원하지 않습니다. 크롬이나 엣지 최신 버전으로 열어주세요.');
+    run(await parseXlsx(await f.arrayBuffer()));
+  }catch(e){ $('#out').innerHTML = `<div class="err">${esc(e.message||e)}</div>`; }
+}
+$('#gota').onclick=()=>{
+  const lines = $('#ta').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(!lines.length) return;
+  SRCNAME='붙여넣기';
+  RESULT = lines.map((t,i)=>({no:`${i+1}`, name:`${i+1}번`, text:t, bytes:neisBytes(t),
+    chars:[...t].length, finds:inspect(t,[]), row:i+1}));
+  render();
+  window.scrollTo({top:$('#out').offsetTop-20,behavior:'smooth'});
+};
+
+/* 테마 */
+$('#themebtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const sysDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const next = cur ? (cur==='dark'?'light':'dark') : (sysDark?'light':'dark');
+  document.documentElement.setAttribute('data-theme',next);
+};
+</script>
+</body>
+</html>
