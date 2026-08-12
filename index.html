@@ -521,9 +521,10 @@ function inspect(text, names){
     if(kept.some(k=>k.rule.id===f.rule.id && k.i===f.i)) continue;
     kept.push(f);
   }
-  // 더 중한 지적이 이미 덮고 있는 구간의 하위 등급 지적은 숨긴다
-  return kept.filter(f => !kept.some(g =>
-    ORD[g.rule.sev] < ORD[f.rule.sev] && f.i>=g.i && f.i+f.len<=g.i+g.len));
+  // 더 중한 지적이 덮고 있거나, 같은 종류의 더 긴 지적에 포함되는 것은 숨긴다
+  return kept.filter(f => !kept.some(g => g!==f && f.i>=g.i && f.i+f.len<=g.i+g.len && (
+    ORD[g.rule.sev] < ORD[f.rule.sev] ||
+    (g.rule.id===f.rule.id && g.len>f.len))));
 }
 
 /* 하이라이트 — 겹치지 않는 것만 표시 */
