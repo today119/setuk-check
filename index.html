@@ -188,6 +188,16 @@ details.help{margin-top:34px;border-top:1px solid var(--line);padding-top:22px}
 details.help summary{cursor:pointer;font-weight:650;color:var(--ink2);font-size:.95rem}
 details.help .in{font-size:.9rem;color:var(--ink2);line-height:1.8}
 details.help li{margin-bottom:5px}
+.fblabel{display:block;font-size:.85rem;font-weight:650;color:var(--ink2);margin:12px 0 5px}
+.fblabel span{font-weight:400;color:var(--ink3)}
+#fbwho{width:100%;max-width:320px;border:1px solid var(--line);border-radius:9px;padding:9px 12px;
+  font-family:inherit;font-size:.92rem;background:var(--card);color:var(--ink)}
+#fbmsg{min-height:96px}
+#fbwho:focus,#fbmsg:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.fbrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.fbstat{font-size:.88rem;font-weight:600}
+.fbstat.ok{color:var(--ok)} .fbstat.no{color:var(--red)}
+.fbnote{font-size:.82rem;color:var(--ink3);margin-top:12px;line-height:1.65}
 footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);
   color:var(--ink3);font-size:.83rem;line-height:1.75}
 .tblwrap{overflow-x:auto}
@@ -230,6 +240,24 @@ th{color:var(--ink3);font-weight:650;font-size:.82rem}
 <button class="go" id="gota" type="button">붙여넣은 내용 검사</button>
 
 <div id="out"></div>
+
+<details class="help" id="fbbox">
+  <summary>💬 이런 기능이 있으면 좋겠어요 — 의견 보내기</summary>
+  <div class="in">
+    <p>쓰시면서 <b>잘못 잡는 것</b>, <b>꼭 잡아야 하는데 안 잡히는 것</b>, <b>있었으면 하는 기능</b>을 남겨 주세요.
+       읽고 반영합니다. 답장은 못 드리니 회신이 필요하면 학교·성함을 적어 주세요.</p>
+    <label class="fblabel">학교·성함 <span>(선택)</span></label>
+    <input id="fbwho" type="text" maxlength="50" placeholder="예) 영종고 김○○">
+    <label class="fblabel">의견</label>
+    <textarea id="fbmsg" maxlength="1500" placeholder="예) 「우승」이 자꾸 잡히는데 수업 중 리그전이라 괜찮습니다. / 학년별 세특도 검사되면 좋겠어요."></textarea>
+    <div class="fbrow">
+      <button class="go" id="fbsend" type="button">보내기</button>
+      <span id="fbstat" class="fbstat"></span>
+    </div>
+    <p class="fbnote">🔒 <b>보내신 글만 전송됩니다.</b> 올리신 엑셀이나 학생 정보는 어떤 경우에도 전송되지 않습니다.
+       브라우저 종류만 함께 기록해 오류 재현에 씁니다.</p>
+  </div>
+</details>
 
 <details class="help">
   <summary>어떤 기준으로 검사하나요?</summary>
@@ -914,6 +942,25 @@ $('#gota').onclick=()=>{
   GROUPS = findRepeats(RESULT); applyRepeats(RESULT, GROUPS);
   render();
   window.scrollTo({top:$('#out').offsetTop-20,behavior:'smooth'});
+};
+
+/* 의견 보내기 — 브라우저에서 곧바로 접수처로 보낸다(라이브러리 없음).
+   보내는 것: 의견 글, 적어 주신 이름, 브라우저 종류. 파일 내용은 절대 보내지 않는다. */
+const FB_URL='https://jumprope-393f6-default-rtdb.asia-southeast1.firebasedatabase.app/setukFeedback.json';
+$('#fbsend').onclick=async()=>{
+  const msg=$('#fbmsg').value.trim(), who=$('#fbwho').value.trim(), st=$('#fbstat');
+  if(msg.length<2){ st.className='fbstat no'; st.textContent='내용을 적어 주세요.'; return; }
+  $('#fbsend').disabled=true; st.className='fbstat'; st.textContent='보내는 중…';
+  try{
+    const res=await fetch(FB_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({msg, who:who.slice(0,50), ua:navigator.userAgent.slice(0,190), at:Date.now()})});
+    if(!res.ok) throw new Error('전송 실패 ('+res.status+')');
+    st.className='fbstat ok'; st.textContent='✓ 보냈습니다. 읽고 반영하겠습니다.';
+    $('#fbmsg').value=''; $('#fbwho').value='';
+  }catch(e){
+    st.className='fbstat no';
+    st.textContent='보내지 못했습니다. 네트워크가 막혀 있으면 학교 메일로 알려 주세요.';
+  }finally{ $('#fbsend').disabled=false; }
 };
 
 /* 테마 */
