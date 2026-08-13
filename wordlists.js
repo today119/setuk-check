@@ -105,6 +105,13 @@ const DEP_NOUN = ['수','것','때','뿐','만큼'];
 const DEP_EXC = new Set(['들것','물것','물때','한때','그때','이때','참때',
   '실수','필수','술수','별수','일수','물수','절수','활수','골수','탈수','말수','홀수','결수','설수','열수','살수','칼수']);
 
+/* 영문 허용 목록 — 기재요령 제4조③ 「일반화된 명사」
+   문자는 한글로 입력하되 아래와 같이 널리 쓰이는 말은 영문으로 둘 수 있다. */
+const OK_EN = new Set(['CEO','PD','UCC','IT','POP','CF','TV','PAPS','SNS','PPT','AI','OX','MVP',
+  'DNA','GPS','PC','LED','USB','QR','VR','AR','UN','WHO','ICT','STEAM','OECD','UNESCO','NIE',
+  'CCTV','LCD','MC','OT','PT','QA','SW','HW','UI','UX','IQ','EQ','BMI','CPR','DIY','FAQ','GDP',
+  'IoT','ID','TF','VOD','WIFI','XR','3D','2D','A','B','C','D','E','F','G','X','Y','Z']);
+
 /* 조사·어미가 겹쳐 잘못 쓰인 꼴 */
 const DOUBLE_JOSA = /(을를|를을|은는|는은|에서에서|으로로|로으로|에에(?![가-힣])|의의(?![가-힣])|와과|과와|에게에게)/g;
 
@@ -113,4 +120,4 @@ const DOUBLE_JOSA = /(을를|를을|은는|는은|에서에서|으로로|로으�
 const LONG_WORD = 9;
 
 if (typeof module !== 'undefined')
-  module.exports = { SPELL, SPACING, SPACING_JOIN, DEP_PRE, DEP_NOUN, DEP_EXC, DOUBLE_JOSA, LONG_WORD };
+  module.exports = { SPELL, SPACING, SPACING_JOIN, DEP_PRE, DEP_NOUN, DEP_EXC, DOUBLE_JOSA, LONG_WORD, OK_EN };
