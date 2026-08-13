@@ -156,6 +156,16 @@ mark.check{background:var(--amber-bg);color:var(--amber);box-shadow:inset 0 -2px
 mark.style{background:var(--slate-bg);color:var(--slate);box-shadow:inset 0 -2px 0 var(--slate)}
 mark.typo{background:var(--blue-bg);color:var(--blue);box-shadow:inset 0 -2px 0 var(--blue)}
 
+details.reppanel{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+details.reppanel summary{cursor:pointer;font-weight:680;font-size:.97rem}
+.repin{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.repitem{border-left:3px solid var(--amber);padding-left:12px}
+.rephead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.repn{color:var(--ink3);font-size:.83rem}
+.reptext{font-size:.89rem;color:var(--ink2);line-height:1.7}
+.reprate{font-size:.8rem;color:var(--amber);font-weight:700;background:var(--amber-bg);
+  border-radius:6px;padding:1px 8px}
 .finds{display:flex;flex-direction:column;gap:7px}
 .find{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.6}
 .tag{
@@ -211,8 +221,8 @@ th{color:var(--ink3);font-weight:650;font-size:.82rem}
 <div class="drop" id="drop">
   <div class="big">📄</div>
   <h2>엑셀 파일을 여기에 끌어다 놓으세요</h2>
-  <p>NEIS → 성적 → 과목별 세부능력 및 특기사항 → 엑셀 내려받기 (.xlsx)</p>
-  <input type="file" id="file" accept=".xlsx">
+  <p>NEIS → 성적 → 과목별 세부능력 및 특기사항 → 엑셀 내려받기 (.xlsx)<br><b>여러 반 파일을 한꺼번에</b> 올리면 반복 문구까지 함께 찾습니다</p>
+  <input type="file" id="file" accept=".xlsx" multiple>
 </div>
 
 <div class="orbar">또는 문장을 직접 붙여넣기</div>
@@ -230,9 +240,11 @@ th{color:var(--ink3);font-weight:650;font-size:.82rem}
       <tr><td><span class="tag block">금지</span></td><td>공인어학시험 · 대회 참여와 수상 · 모의고사 성적 · 논문/출간/지식재산권 · 소논문 · MOOC · 방과후학교 · 해외활동 · 자격증 · 인증시험 · 장학금 · 부모 지위 · 학교명</td><td>유의사항 3항, 제13조</td></tr>
       <tr><td><span class="tag check">확인</span></td><td>순위·등수 표현 · 대학/학원/상호명 · 특정 앱·상표명 · 학생 실명 · 1인칭 · 구체적 점수</td><td>문맥 판단 필요</td></tr>
       <tr><td><span class="tag style">형식</span></td><td>1,500Byte(500자) 초과 · 문장 종결 · 영문 사용 · 특수문자·이모지</td><td>제4조③</td></tr>
+      <tr><td><span class="tag check">반복</span></td><td><b>여러 학생이 같은 문장을 쓴 경우</b> — 똑같은 문장과 거의 같은 문장(낱말만 바꾼 것)을 모두 찾습니다. 파일 여러 개를 한꺼번에 올리면 반을 넘나들며 비교합니다.</td><td>유의사항 5-가</td></tr>
       <tr><td><span class="tag typo">오탈자</span></td><td>맞춤법 150여 항목 · <b>의존명사 띄어쓰기</b>(수·것·때·뿐·만큼) · 붙어버린 긴 어절 · 조사 오류와 겹침 · 어절 중복 · <b>두 칸 공백</b>·문장부호 · 자모·깨진 글자 · 괄호 짝 · 마침표 누락</td><td>—</td></tr>
     </table></div>
     <p style="margin-top:14px"><b>글자 수 기준</b> — NEIS는 한글·한자 1자를 <b>3Byte</b>, 영문·숫자·공백을 1Byte로 셉니다. 과목별 세부능력 및 특기사항은 <b>500자(1,500Byte)</b>가 한도입니다.</p>
+    <p><b>반복 문구 검사</b> — 14자 이상인 문장만 봅니다. 「~하는 태도가 인상적임」처럼 짧은 상투구까지 잡으면 온통 빨간불이 되기 때문입니다. 낱말만 바꾼 문장은 최장공통부분열 유사도 78% 이상이면 같은 문장으로 봅니다. 「남과 겹치는 분량」이 15%를 넘으면 학생 카드에 비율이 표시됩니다.</p>
     <p><b>오탈자 검사의 한계</b> — 완전한 맞춤법 검사는 형태소 분석이 필요하고, 외부 검사기 API를 쓰면 학생 문장을 다른 서버로 보내야 해서 넣지 않았습니다. 대신 <b>자주 틀리는 것을 확실히 잡는</b> 쪽으로 만들었습니다. 「맞추다/맞히다」, 「로써/로서」, 「율/률」처럼 문맥에 따라 둘 다 맞는 것은 일부러 검사하지 않습니다.</p>
     <p><b>「확인」 표시는 무조건 잘못이라는 뜻이 아닙니다.</b> 예를 들어 수업 중 리그전의 「우승」은 대회 성적이 아니므로 그대로 두셔도 됩니다. 기계가 판단할 수 없는 부분이라 사람이 보시라고 표시합니다.</p>
   </div>
@@ -569,6 +581,106 @@ function highlight(t, finds){
 }
 
 /* ══════════════════════════════════════════
+   2-B. 반복 문구 — 학생 사이에 같은 문장이 돌아다니는지
+   ══════════════════════════════════════════ */
+const REP_MIN = 14;          // 이 길이(정규화 한글 기준) 미만 문장은 상투구로 보고 건너뜀
+const PRE  = 0.35;           // 1차 거르기 — 문자 3-gram 자카드
+const NEAR = 0.78;           // 최종 판정 — 최장공통부분열 기준 유사도
+
+const normSent = s => s.replace(/[^가-힣A-Za-z0-9]/g,'');
+function splitSents(t){
+  const out=[]; let p=0;
+  for(const m of t.matchAll(/[^.!?\n]+[.!?]/g)){ out.push({i:m.index, raw:m[0]}); p=m.index+m[0].length; }
+  const tail=t.slice(p);
+  if(tail.trim().length>4) out.push({i:p, raw:tail});
+  return out;
+}
+const gram3 = s => { const g=new Set(); for(let i=0;i<=s.length-3;i++) g.add(s.slice(i,i+3)); return g; };
+function jaccard(a,b){ let n=0; for(const x of a) if(b.has(x)) n++; return n/(a.size+b.size-n); }
+/* 최장공통부분열 기반 유사도 — 3-gram 자카드는 짧은 문장에서 값이 너무 낮게 나와
+   「태도가→자세가」 정도의 손질을 못 잡는다. 1차로 자카드로 거른 뒤 여기서 확정한다. */
+function lcsRatio(a,b){
+  if(a.length>240||b.length>240){ a=a.slice(0,240); b=b.slice(0,240); }
+  const m=b.length; let prev=new Uint16Array(m+1), cur=new Uint16Array(m+1);
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=m;j++)
+      cur[j] = a[i-1]===b[j-1] ? prev[j-1]+1 : Math.max(prev[j], cur[j-1]);
+    [prev,cur]=[cur,prev]; cur.fill(0);
+  }
+  return 2*prev[m]/(a.length+b.length);
+}
+
+function findRepeats(students){
+  // ① 문장 수집
+  const S=[];
+  students.forEach((st,si)=>{
+    splitSents(st.text).forEach(x=>{
+      const n=normSent(x.raw);
+      if(n.length<REP_MIN) return;
+      S.push({si, i:x.i, len:x.raw.length, raw:x.raw.trim(), n});
+    });
+  });
+  if(!S.length) return [];
+
+  // ② 완전히 같은 문장끼리 먼저 묶는다
+  const byNorm=new Map();
+  S.forEach(x=>{ if(!byNorm.has(x.n)) byNorm.set(x.n,[]); byNorm.get(x.n).push(x); });
+  const cl=[...byNorm.values()].map(items=>({items, n:items[0].n, g:gram3(items[0].n), exact:true}));
+
+  // ③ 대표 문장끼리 유사도로 다시 합친다 (길이순 정렬 + 조기 중단)
+  cl.sort((x,y)=>x.n.length-y.n.length);
+  const dead=new Array(cl.length).fill(false);
+  for(let i=0;i<cl.length;i++){
+    if(dead[i]) continue;
+    for(let j=i+1;j<cl.length;j++){
+      if(dead[j]) continue;
+      if(cl[j].n.length > cl[i].n.length*1.4) break;
+      if(jaccard(cl[i].g, cl[j].g) >= PRE && lcsRatio(cl[i].n, cl[j].n) >= NEAR){
+        cl[i].items = cl[i].items.concat(cl[j].items);
+        cl[i].exact = false;
+        dead[j]=true;
+      }
+    }
+  }
+
+  // ④ 2건 이상 남은 묶음만
+  const groups=[];
+  cl.forEach((c,idx)=>{
+    if(dead[idx] || c.items.length<2) return;
+    const people=new Set(c.items.map(x=>x.si));
+    const rep=c.items.slice().sort((a,b)=>b.raw.length-a.raw.length)[0];
+    groups.push({kind: c.exact?'exact':'near', text:rep.raw, items:c.items, people, count:people.size});
+  });
+  groups.sort((a,b)=> b.count-a.count || b.items.length-a.items.length || b.text.length-a.text.length);
+  return groups;
+}
+
+/* 학생별 중복률 + 본문 표시용 지적 붙이기 */
+function applyRepeats(students, groups){
+  students.forEach(s=>{ s.repBytes=0; s.repFinds=[]; });
+  for(const g of groups){
+    const others = g.items.map(x=>x.si);
+    for(const it of g.items){
+      const st=students[it.si];
+      const mates=[...new Set(others.filter(x=>x!==it.si))].map(x=>students[x].name);
+      const self = g.items.filter(x=>x.si===it.si).length>1;
+      const who = mates.length ? `${mates.length+1}명이 같은 문장 (${mates.slice(0,4).join(', ')}${mates.length>4?` 외 ${mates.length-4}명`:''})`
+                               : '같은 학생 글 안에서 반복';
+      st.repFinds.push({ i:it.i, len:it.len,
+        rule:{ id:'repeat', sev:'check', cat: g.kind==='exact' ? '반복 문구' : '거의 같은 문구',
+               ref:'유의사항 5-가', why:'' },
+        hit: it.raw.slice(0,16)+(it.raw.length>16?'…':''),
+        extra: `${g.kind==='exact'?'똑같은 문장':'거의 같은 문장'} — ${who}` });
+      st.repBytes += it.len;
+    }
+  }
+  students.forEach(s=>{
+    s.repRate = s.text.length ? Math.round(Math.min(1, s.repBytes/s.text.length)*100) : 0;
+    if(s.repFinds.length) s.finds = s.finds.concat(s.repFinds);
+  });
+}
+
+/* ══════════════════════════════════════════
    3. 화면
    ══════════════════════════════════════════ */
 const $ = s => document.querySelector(s);
@@ -591,28 +703,36 @@ function findCols(rows){
   return {textCol,nameCol,noCol};
 }
 
-function run(rows){
-  const {textCol,nameCol,noCol} = findCols(rows);
-  const names = nameCol>=0 ? rows.slice(1).map(r=>String(r[nameCol]||'').trim()).filter(x=>x.length>=2) : [];
-  RESULT = rows.slice(1).map((r,idx)=>{
-    const text = String(r[textCol]||'').trim();
-    if(!text) return null;
-    const nm = nameCol>=0 ? String(r[nameCol]||'').trim() : `${idx+1}번`;
-    const others = names.filter(x=>x!==nm);
-    return {no: noCol>=0? String(r[noCol]||'') : String(idx+1), name:nm, text,
-            bytes:neisBytes(text), chars:[...text].length, finds:inspect(text, others), row:idx+2};
-  }).filter(Boolean);
+let GROUPS = [];
+function run(sets){                        // sets = [{name, rows}, ...]
+  RESULT=[]; 
+  for(const set of sets){
+    const {textCol,nameCol,noCol} = findCols(set.rows);
+    const names = nameCol>=0 ? set.rows.slice(1).map(r=>String(r[nameCol]||'').trim()).filter(x=>x.length>=2) : [];
+    set.rows.slice(1).forEach((r,idx)=>{
+      const text = String(r[textCol]||'').trim();
+      if(!text) return;
+      const nm = nameCol>=0 ? String(r[nameCol]||'').trim() : `${idx+1}번`;
+      RESULT.push({ file:set.name, no: noCol>=0? String(r[noCol]||'') : String(idx+1), name:nm,
+        text, bytes:neisBytes(text), chars:[...text].length,
+        finds:inspect(text, names.filter(x=>x!==nm)), row:idx+2 });
+    });
+  }
+  GROUPS = findRepeats(RESULT);
+  applyRepeats(RESULT, GROUPS);
   render();
 }
 
 function render(){
   if(!RESULT.length){ $('#out').innerHTML=`<div class="err">검사할 내용을 찾지 못했습니다. 세특 문장이 들어 있는 파일인지 확인해 주세요.</div>`; return; }
-  const cnt={block:0,check:0,style:0,typo:0,over:0,clean:0};
+  const cnt={block:0,check:0,style:0,typo:0,over:0,clean:0,rep:0};
   RESULT.forEach(s=>{
     s.finds.forEach(f=>cnt[f.rule.sev]++);
     if(s.bytes>LIMIT) cnt.over++;
+    if(s.repFinds && s.repFinds.length) cnt.rep++;
     if(!s.finds.length && s.bytes<=LIMIT) cnt.clean++;
   });
+  const files=[...new Set(RESULT.map(x=>x.file))];
   const chip=(k,l)=>`<button class="chip ${FILTER===k?'on':''}" data-f="${k}" type="button">${l}</button>`;
   let h = `<div class="summary">
     <div class="statgrid">
@@ -622,15 +742,33 @@ function render(){
       <div class="stat slate"><div class="n">${cnt.style}</div><div class="l">⚪ 형식</div></div>
       <div class="stat blue"><div class="n">${cnt.typo}</div><div class="l">🔵 오탈자</div></div>
       <div class="stat red"><div class="n">${cnt.over}</div><div class="l">분량 초과</div></div>
+      <div class="stat amber"><div class="n">${cnt.rep}</div><div class="l">🔁 반복 문구</div></div>
     </div>
+    ${files.length>1?`<p style="color:var(--ink3);font-size:.86rem;margin:-14px 0 18px">파일 ${files.length}개를 합쳐서 검사했습니다 — ${files.map(esc).join(' · ')}</p>`:''}
     <div class="filters">
       ${chip('all','전체')}${chip('block','🔴 기재 금지')}${chip('check','🟠 확인 필요')}
-      ${chip('style','⚪ 형식')}${chip('typo','🔵 오탈자')}${chip('over','분량 초과')}${chip('clean','이상 없음')}
+      ${chip('style','⚪ 형식')}${chip('typo','🔵 오탈자')}${chip('over','분량 초과')}${chip('rep','🔁 반복 문구')}${chip('clean','이상 없음')}
     </div></div>`;
+
+  if(GROUPS.length){
+    const top = GROUPS.slice(0, FILTER==='rep' ? 60 : 12);
+    h += `<details class="reppanel" ${FILTER==='rep'?'open':''}>
+      <summary>🔁 여러 학생이 함께 쓴 문장 <b>${GROUPS.length}</b>건 ${GROUPS.length>top.length?`(많이 쓰인 ${top.length}건 표시)`:''}</summary>
+      <div class="repin">`;
+    for(const g of top){
+      const who = [...g.people].map(i=>RESULT[i]);
+      h += `<div class="repitem">
+        <div class="rephead"><span class="tag ${g.kind==='exact'?'check':'style'}">${g.kind==='exact'?'똑같은 문장':'거의 같은 문장'}</span>
+          <b>${g.count}명</b><span class="repn">${esc(who.slice(0,10).map(x=>x.name).join(', '))}${who.length>10?` 외 ${who.length-10}명`:''}</span></div>
+        <div class="reptext">${esc(g.text)}</div></div>`;
+    }
+    h += `</div></details>`;
+  }
 
   const list = RESULT.filter(s=>{
     if(FILTER==='all') return true;
     if(FILTER==='over') return s.bytes>LIMIT;
+    if(FILTER==='rep') return s.repFinds && s.repFinds.length;
     if(FILTER==='clean') return !s.finds.length && s.bytes<=LIMIT;
     return s.finds.some(f=>f.rule.sev===FILTER);
   });
@@ -643,7 +781,8 @@ function render(){
     h += `<div class="card ${!s.finds.length&&s.bytes<=LIMIT?'clean':''}">
       <div class="chead">
         <span class="who">${esc(s.name)}</span>
-        <span class="pos">${esc(s.no)} · ${s.row}행</span>
+        <span class="pos">${esc(s.no)} · ${s.row}행${files.length>1?' · '+esc(s.file):''}</span>
+        ${s.repRate>=15?`<span class="reprate">🔁 남과 겹치는 분량 ${s.repRate}%</span>`:''}
         <span class="bytes ${s.bytes>LIMIT?'over':''}">${s.chars}자 · ${s.bytes.toLocaleString()} / 1,500 Byte${s.bytes>LIMIT?` (${s.bytes-LIMIT} 초과)`:''}</span>
       </div>
       <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
@@ -682,6 +821,7 @@ function opinionOf(s){
   if(g.check.length) parts.push('[확인필요] '+[...new Set(g.check)].join(', '));
   if(g.style.length) parts.push('[형식] '+[...new Set(g.style)].join(', '));
   if(g.typo.length)  parts.push('[오탈자] '+[...new Set(g.typo)].join(', '));
+  if(s.repFinds && s.repFinds.length) parts.push(`[반복] ${s.repFinds.length}개 문장이 다른 학생과 겹침 (중복률 ${s.repRate}%)`);
   return parts.join('\n');
 }
 function dlTxt(){
@@ -720,9 +860,10 @@ function zipStored(entries){
 }
 function dlXlsx(){
   const X = s => String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');
-  const head=['반/번호','성명','글자수','Byte','1500초과','검토의견','세부능력 및 특기사항'];
-  const rows=[head, ...RESULT.map(s=>[s.no,s.name,s.chars,s.bytes,s.bytes>LIMIT?'초과':'',opinionOf(s),s.text])];
-  const CL='ABCDEFG';
+  const head=['파일','반/번호','성명','글자수','Byte','1500초과','중복률%','검토의견','세부능력 및 특기사항'];
+  const rows=[head, ...RESULT.map(s=>[s.file||'',s.no,s.name,s.chars,s.bytes,s.bytes>LIMIT?'초과':'',
+    s.repRate||0,opinionOf(s),s.text])];
+  const CL='ABCDEFGHI';
   const sheet = rows.map((r,ri)=>'<row r="'+(ri+1)+'">'+r.map((c,ci)=>
       typeof c==='number'
         ? `<c r="${CL[ci]}${ri+1}"><v>${c}</v></c>`
@@ -733,7 +874,7 @@ function dlXlsx(){
     ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
     ['xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="점검결과" sheetId="1" r:id="rId1"/></sheets></workbook>'],
     ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
-    ['xl/worksheets/sheet1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="10"/><col min="2" max="2" width="10"/><col min="3" max="5" width="8"/><col min="6" max="6" width="52"/><col min="7" max="7" width="90"/></cols><sheetData>'+sheet+'</sheetData></worksheet>']
+    ['xl/worksheets/sheet1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="16"/><col min="2" max="3" width="10"/><col min="4" max="7" width="8"/><col min="8" max="8" width="52"/><col min="9" max="9" width="90"/></cols><sheetData>'+sheet+'</sheetData></worksheet>']
   ]), `세특점검_${SRCNAME}.xlsx`);
 }
 function save(blob,name){
@@ -746,23 +887,31 @@ const drop=$('#drop'), file=$('#file');
 drop.onclick=()=>file.click();
 ['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('on');}));
 ['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('on');}));
-drop.addEventListener('drop',ev=>{ if(ev.dataTransfer.files[0]) load(ev.dataTransfer.files[0]); });
-file.onchange=()=>{ if(file.files[0]) load(file.files[0]); };
-async function load(f){
-  SRCNAME = f.name.replace(/\.xlsx?$/i,'');
-  $('#out').innerHTML = `<div class="err" style="background:var(--accent-soft);color:var(--accent)">읽는 중…</div>`;
+drop.addEventListener('drop',ev=>{ if(ev.dataTransfer.files.length) load(ev.dataTransfer.files); });
+file.onchange=()=>{ if(file.files.length) load(file.files); };
+async function load(list){
+  const files=[...list];
+  SRCNAME = files.length===1 ? files[0].name.replace(/\.xlsx?$/i,'') : `${files.length}개파일`;
+  $('#out').innerHTML = `<div class="err" style="background:var(--accent-soft);color:var(--accent)">${files.length}개 파일 읽는 중…</div>`;
   try{
-    if(!/\.xlsx$/i.test(f.name)) throw new Error('.xlsx 파일만 됩니다. 예전 .xls 형식이면 엑셀에서 「다른 이름으로 저장 → .xlsx」 하신 뒤 올려주세요.');
-    if(typeof DecompressionStream==='undefined') throw new Error('이 브라우저는 지원하지 않습니다. 크롬이나 엣지 최신 버전으로 열어주세요.');
-    run(await parseXlsx(await f.arrayBuffer()));
+    if(typeof DecompressionStream==='undefined')
+      throw new Error('이 브라우저는 지원하지 않습니다. 크롬이나 엣지 최신 버전으로 열어주세요.');
+    const sets=[];
+    for(const f of files){
+      if(!/\.xlsx$/i.test(f.name))
+        throw new Error(`「${f.name}」 — .xlsx 파일만 됩니다. 예전 .xls 형식이면 엑셀에서 「다른 이름으로 저장 → .xlsx」 하신 뒤 올려주세요.`);
+      sets.push({ name:f.name.replace(/\.xlsx?$/i,''), rows: await parseXlsx(await f.arrayBuffer()) });
+    }
+    run(sets);
   }catch(e){ $('#out').innerHTML = `<div class="err">${esc(e.message||e)}</div>`; }
 }
 $('#gota').onclick=()=>{
   const lines = $('#ta').value.split('\n').map(x=>x.trim()).filter(Boolean);
   if(!lines.length) return;
   SRCNAME='붙여넣기';
-  RESULT = lines.map((t,i)=>({no:`${i+1}`, name:`${i+1}번`, text:t, bytes:neisBytes(t),
+  RESULT = lines.map((t,i)=>({file:'붙여넣기', no:`${i+1}`, name:`${i+1}번`, text:t, bytes:neisBytes(t),
     chars:[...t].length, finds:inspect(t,[]), row:i+1}));
+  GROUPS = findRepeats(RESULT); applyRepeats(RESULT, GROUPS);
   render();
   window.scrollTo({top:$('#out').offsetTop-20,behavior:'smooth'});
 };
